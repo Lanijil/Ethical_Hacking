@@ -1,86 +1,64 @@
-# Ethical Hacking App – Refonte & conteneurisation
+# 🛡️ Ethical Hacking – Web Vulnerabilities Lab
 
-## Objectif du travail
-L’objectif de ce travail était de **reprendre une application React existante** et de la transformer en un projet plus **professionnel et structuré**, sans ajouter de nouvelles fonctionnalités métier.
-
-Les efforts ont porté sur :
-- l’architecture globale du projet
-- la séparation des responsabilités
-- la conteneurisation avec Docker
+Projet pédagogique **full‑stack volontairement vulnérable** destiné à l’apprentissage de l’ethical hacking et des vulnérabilités web (SQL Injection, XSS stockée, mauvaises pratiques API).
 
 ---
 
-## Modifications réalisées
-
-### 1. Séparation frontend / backend
-
-Le projet initial était constitué uniquement d’un frontend React. Il a été découpé en deux services distincts :
-
-- **Frontend** : application React (Create React App)
-- **Backend** : API FastAPI (Python)
-
-Cette séparation permet :
-- une meilleure lisibilité du code
-- une évolution indépendante des composants
-- une architecture proche des standards utilisés en entreprise
-
----
-
-### 2. Refonte de l’arborescence
-
-Une nouvelle arborescence a été mise en place afin de rendre le projet plus clair et scalable.
+## 📦 Architecture du projet
 
 ```
-ethical-hacking-app/
-├── docker-compose.yml
-├── .env
-├── README.md
+Ethical_Hacking/
+├── backend/
+│   ├── Dockerfile
+│   └── app/
+│       ├── main.py
+│       ├── db.py
+│       ├── __init__.py
+│       └── api/
+│           ├── __init__.py
+│           ├── users.py
+│           └── comments.py
+│
 ├── frontend/
 │   ├── Dockerfile
-│   ├── package.json
-│   ├── public/
 │   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── services/
-│       ├── styles/
-│       └── App.jsx
-└── backend/
-    ├── Dockerfile
-    ├── requirements.txt
-    └── app/
-        ├── main.py
-        └── api/
+│       ├── App.jsx
+│       ├── index.js
+│       └── styles/
+│           └── global.css
+│
+└── docker-compose.yml
 ```
 
 ---
 
-### 3. Conteneurisation avec Docker
+## 🧠 Objectifs pédagogiques
 
-Le projet est désormais entièrement conteneurisé :
+Ce projet permet de :
 
-- un conteneur pour le frontend React
-- un conteneur pour le backend FastAPI
-- un fichier `docker-compose.yml` pour orchestrer l’ensemble
+- Comprendre les échanges **frontend ↔ backend**
+- Identifier et exploiter des vulnérabilités web courantes
+- Tester des attaques réelles dans un environnement contrôlé
 
-Cela permet :
-- un lancement du projet en une seule commande
-- un environnement cohérent quel que soit le poste
-- une base prête pour un déploiement futur
+### Vulnérabilités incluses volontairement
 
----
-
-### 4. Mise en place d’une API minimale
-
-Une API FastAPI minimale a été créée afin de :
-- valider la communication frontend ↔ backend
-- fournir une base extensible pour de futures fonctionnalités
-
-Un endpoint de test (`/health`) est disponible pour vérifier l’état de l’API.
+| Vulnérabilité                      | Où                    | Description                                |
+| ---------------------------------- | --------------------- | ------------------------------------------ |
+| SQL Injection                      | `/user`, `/comment`   | Requêtes SQL construites par concaténation |
+| XSS stockée                        | `/comment` + frontend | Injection HTML/JS persistante              |
+| Mauvaise gestion des mots de passe | `/user`               | Passwords stockés en clair                 |
+| CORS permissif                     | backend               | `allow_origins = *`                        |
 
 ---
 
-## Lancement du projet
+## 🚀 Lancement du projet
+
+### Prérequis
+
+- Docker
+- Docker Compose
+
+### Démarrage
 
 À la racine du projet :
 
@@ -88,35 +66,89 @@ Un endpoint de test (`/health`) est disponible pour vérifier l’état de l’A
 docker compose up --build
 ```
 
-- Frontend : http://localhost:3000
-- Backend (docs) : http://localhost:8000/docs
+### Accès
+
+- Frontend : [http://localhost:3000](http://localhost:3000)
+- Backend API : [http://localhost:8000](http://localhost:8000)
+- Documentation Swagger : [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## Avant / Après
+## 🔌 API Backend (FastAPI)
 
-### Avant
-- Frontend React seul
-- Arborescence basique Create React App
-- Aucun backend
-- Pas de conteneurisation
-- Lancement dépendant de l’environnement local
+### Users
 
-### Après
-- Frontend et backend séparés
-- Architecture claire et modulaire
-- API FastAPI prête à être étendue
-- Conteneurisation complète avec Docker
-- Lancement standardisé via `docker compose`
+- `GET /users` → liste des utilisateurs
+- `POST /user` → création d’un utilisateur
+
+**Payload attendu :**
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
 
 ---
 
-## Conclusion
+### Comments
 
-Ce travail a permis de transformer un projet initial simple en une **base technique propre, professionnelle et présentable**, mettant en avant des compétences en :
-- structuration de projet
-- Docker / Docker Compose
-- séparation des responsabilités frontend / backend
+- `GET /comments` → liste des commentaires
+- `POST /comment` → ajout d’un commentaire
 
-Le projet constitue désormais une base saine pouvant servir de support pédagogique ou de démonstration technique.
+**Payload attendu :**
 
+```json
+{
+  "author": "attacker",
+  "content": "<script>alert('XSS')</script>"
+}
+```
+
+---
+
+## 🖥️ Frontend (React)
+
+Le frontend est volontairement simple et vulnérable.
+
+### Fonctionnalités
+
+- Liste des utilisateurs
+- Ajout d’utilisateurs
+- Liste des commentaires
+- Ajout de commentaires
+
+---
+
+## 🗄️ Base de données
+
+- SQLite (`database.db`)
+- Créée automatiquement au démarrage
+
+### Tables
+
+#### users
+
+| Champ    | Type    |
+| -------- | ------- |
+| id       | INTEGER |
+| username | TEXT    |
+| password | TEXT    |
+
+#### comments
+
+| Champ   | Type    |
+| ------- | ------- |
+| id      | INTEGER |
+| author  | TEXT    |
+| content | TEXT    |
+
+---
+
+## 🛠️ Améliorations possibles
+
+- Authentification vulnérable (login)
+- Version sécurisée du backend
+- Mode "attaque / défense"
+- TP étudiants + corrigés

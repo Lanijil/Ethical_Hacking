@@ -1,137 +1,127 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import "./styles/global.css";
+import { useEffect, useState } from "react";
 
 function App() {
+  
   const [users, setUsers] = useState([]);
-  const [queryId, setQueryId] = useState('');
-  const [queriedUser, setQueriedUser] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
+  
+  const [comments, setComments] = useState([]);
+  const [author, setAuthor] = useState("");
+  const [content, setContent] = useState("");
+
+  
+  const fetchUsers = () => {
+    fetch("http://localhost:8000/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => console.error(err));
+  };
+
+ 
+  const fetchComments = () => {
+    fetch("http://localhost:8000/comments")
+      .then((res) => res.json())
+      .then((data) => setComments(data))
+      .catch((err) => console.error(err));
+  };
+
+  
   useEffect(() => {
-    axios.get('http://localhost:8000/users')
-      .then(res => setUsers(res.data))
-      .catch(err => console.error(err.message));
-    
-    loadComments();
+    fetchUsers();
+    fetchComments();
   }, []);
 
-  const loadComments = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/comments');
-      setComments(response.data);
-    } catch (err) {
-      console.error('Error loading comments:', err.message);
-    }
+  
+  const addUser = () => {
+    fetch("http://localhost:8000/user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+      }),
+    })
+      .then(() => {
+        setUsername("");
+        setPassword("");
+        fetchUsers();
+      })
+      .catch((err) => console.error(err));
   };
 
-  const handleQuery = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:8000/user', `SELECT id, name FROM users WHERE id = ${queryId}`, 
-        {
-          headers : {
-            "Content-Type" : 'text/plain'
-          }
-        }
-      );
-      setQueriedUser(response.data);
-    } catch (err) {
-      console.error('Error querying user:', err.message);
-      setQueriedUser(null);
-    }
-  };
 
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:8000/comment', newComment, {
-        headers: {
-          "Content-Type": 'text/plain'
-        }
-      });
-      setNewComment('');
-      loadComments();
-    } catch (err) {
-      console.error('Error submitting comment:', err.message);
-    }
+  const addComment = () => {
+    fetch("http://localhost:8000/comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        author: author,
+        content: content,
+      }),
+    })
+      .then(() => {
+        setAuthor("");
+        setContent("");
+        fetchComments();
+      })
+      .catch((err) => console.error(err));
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        
-        <section style={{ marginBottom: '3rem', border: '2px solid #61dafb', padding: '1rem', borderRadius: '8px' }}>
-          <h3>Users IDs in SQLite</h3>
-          {users.map(u => <p key={u.id}>{u.id}</p>)}
+    <div style={{ padding: "20px" }}>
+      <h1>Ethical Hacking Demo</h1>
 
-          <form onSubmit={handleQuery} style={{ marginTop: '1rem' }}>
-            <input
-              type="text"
-              placeholder="Enter user ID"
-              value={queryId}
-              onChange={(e) => setQueryId(e.target.value)}
-              required
-            />
-            <button type="submit">Query User</button>
-          </form>
 
-          {queriedUser && queriedUser.length > 0 && (
-            <div style={{ marginTop: '1rem' }}>
-              <h3>Queried User:</h3>
-              {queriedUser.map(u => (
-                <p key={u.id}>
-                  ID: {u.id} — Name: {u.name} — Password: {u.password}
-                </p>
-              ))}
-            </div>
-          )}
-        </section>
+      <h2>Users</h2>
+      <input
+        placeholder="username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        placeholder="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button onClick={addUser}>Add User</button>
 
-        <section style={{ border: '2px solid #ff6b6b', padding: '1rem', borderRadius: '8px' }}>
-          
-          <form onSubmit={handleCommentSubmit} style={{ marginTop: '1rem' }}>
-            <textarea
-              placeholder="Enter your comment"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              style={{ 
-                width: '80%', 
-                height: '80px', 
-                marginBottom: '0.5rem',
-                padding: '0.5rem',
-                fontSize: '1rem'
-              }}
-              required
-            />
-            <br />
-            <button type="submit">Post Comment</button>
-          </form>
+      <ul>
+        {users.map((u) => (
+          <li key={u.id}>
+            {u.username} | {u.password}
+          </li>
+        ))}
+      </ul>
 
-          <div style={{ marginTop: '2rem', textAlign: 'left', maxWidth: '80%', margin: '2rem auto' }}>
-            <h3>Comments:</h3>
-            {comments.length === 0 ? (
-              <p>No comments yet. TYPE ONE NOW !</p>
-            ) : (
-              comments.map(comment => (
-                <div 
-                    key={comment.id} 
-                    style={{ 
-                      background: '#282c34', 
-                      padding: '1rem', 
-                      marginBottom: '1rem', 
-                      borderRadius: '4px',
-                      border: '1px solid #444'
-                    }}
-                  >
-                    {comment.content}
-                  </div>
-              ))
-            )}
-          </div>
-        </section>
-      </header>
+      <hr />
+
+      <h2>Comments</h2>
+      <input
+        placeholder="author"
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+      />
+      <input
+        placeholder="content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      <button onClick={addComment}>Add Comment</button>
+
+      <ul>
+        {comments.map((c) => (
+          <li key={c.id}>
+            <strong>{c.author}</strong> :{" "}
+            <span dangerouslySetInnerHTML={{ __html: c.content }} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
